@@ -33,3 +33,4 @@ awscli/*
 
 # generated key files
 *.pem
+simontest/
