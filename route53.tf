@@ -1,6 +1,10 @@
 resource "aws_route53_zone" "icp_private" {
   name = "${random_id.clusterid.hex}.${var.private_domain}"
-  vpc_id = "${aws_vpc.icp_vpc.id}"
+ # vpc_id = "${aws_vpc.icp_vpc.id}"
+  vpc = {
+    vpc_id = "${aws_vpc.icp_vpc.id}"
+    vpc_region = "${var.aws_region}"
+  }
   force_destroy = "true"
 }
 

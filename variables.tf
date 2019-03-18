@@ -4,6 +4,14 @@ variable "aws_region" {
   description = "One of us-east-2, us-east-1, us-west-1, us-west-2, ap-south-1, ap-northeast-2, ap-southeast-1, ap-southeast-2, ap-northeast-1, us-west-2, eu-central-1, eu-west-1, eu-west-2, sa-east-1"
 }
 
+variable "aws_access_key" {
+  description = "aws_access_key"
+}
+
+variable "aws_secret_key" {
+  description = "aws_access_key"
+}
+
 variable "azs" {
   type  = "list"
   description = "The availability zone letter appendix you want to deploy to in the selected region "
