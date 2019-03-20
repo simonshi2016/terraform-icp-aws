@@ -68,9 +68,11 @@ fi
 
 awscli_install
 mkdir -p /tmp/icp_scripts
+s3_install_scripts=$(${awscli} s3 ls s3://${s3_config_bucket}/scripts/ | awk '{print $4}')
 for script in ${s3_install_scripts}; do
   echo "Retrieving install script s3://${s3_config_bucket}/scripts/${script} ..."
   script_name=`basename ${script}`
   ${awscli} s3 cp s3://${s3_config_bucket}/scripts/${script} /tmp/icp_scripts/${script_name}
   chmod +x /tmp/icp_scripts/${script_name}
 done
+

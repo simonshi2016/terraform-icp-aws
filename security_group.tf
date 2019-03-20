@@ -131,6 +131,18 @@ resource "aws_security_group_rule" "proxy-egress" {
   security_group_id = "${aws_security_group.proxy.id}"
 }
 
+resource "aws_security_group_rule" "master-22-ingress" {
+  count = "${length(var.allowed_cidr_master_22)}"
+  type = "ingress"
+  from_port   = 22
+  to_port     = 22
+  protocol    = "tcp"
+  cidr_blocks = [
+    "${element(var.allowed_cidr_master_22, count.index)}"
+  ]
+  security_group_id = "${aws_security_group.master.id}"
+}
+
 resource "aws_security_group_rule" "master-8443-ngw" {
     count = "${length(var.azs)}"
     type = "ingress"

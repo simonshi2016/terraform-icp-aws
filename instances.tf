@@ -147,6 +147,12 @@ resource "aws_instance" "icpmaster" {
     volume_type       = "gp2"
   }
 
+  ebs_block_device {
+    device_name       = "/dev/xvdb"
+    volume_size       = "${var.master["ibm_vol"]}"
+    volume_type       = "gp2"
+  }
+
   network_interface {
     network_interface_id = "${element(aws_network_interface.mastervip.*.id, count.index)}"
     device_index = 0
@@ -173,12 +179,23 @@ write_files:
   permissions: '0755'
   encoding: b64
   content: ${base64encode(file("${path.module}/scripts/bootstrap-node.sh"))}
+- path: /root/.ssh/installkey
+  permission: '0600'
+  encoding: b64
+  content: ${base64encode("${tls_private_key.installkey.private_key_pem}")}
+bootcmd:
+- sed -i 's/SELINUX=enforcing/SELINUX=permissive/g' /etc/sysconfig/selinux
+- setenforce permissive
 runcmd:
 - /tmp/bootstrap-node.sh -c ${aws_s3_bucket.icp_config_backup.id} -s "bootstrap.sh functions.sh ${count.index == 0 ? "start_install.sh" : ""} ${count.index == 0 && var.enable_autoscaling ? "create_client_cert.sh" : ""}"
 - /tmp/icp_scripts/bootstrap.sh ${local.docker_package_uri != "" ? "-p ${local.docker_package_uri}" : "" } -d /dev/xvdx ${local.image_package_uri != "" ? "-i ${local.image_package_uri}" : "" } -s ${var.icp_inception_image} ${length(var.patch_images) > 0 ? "-a \"${join(" ", var.patch_images)}\"" : "" }
 ${count.index == 0 ? "
 - /tmp/icp_scripts/start_install.sh -i ${var.icp_inception_image} -c ${aws_s3_bucket.icp_config_backup.id} -r ${aws_s3_bucket.icp_registry.id} ${length(var.patch_scripts) > 0 ? "-s \"${join(" ", var.patch_scripts)}\"" : "" }"
   :
+"" }
+${count.index == 0 ? "
+- /tmp/icp_scripts/generate_wdp_conf.sh ${aws_lb.icp-console.dns_name} ${aws_lb.icp-proxy.dns_name} ${aws_lb.icp-console.dns_name} icpdeploy '/root/.ssh/installkey' ${aws_s3_bucket.icp_config_backup.id} ${var.icp4d_installer}"
+:
 "" }
 ${count.index == 0 && var.enable_autoscaling ? "
 - /tmp/icp_scripts/create_client_cert.sh -i ${var.icp_inception_image} -b ${aws_s3_bucket.icp_config_backup.id}"
@@ -191,6 +208,7 @@ mounts:
 "
 :
 "" }
+disable_root: false
 users:
 - default
 - name: icpdeploy
@@ -198,6 +216,9 @@ users:
   sudo: [ "ALL=(ALL) NOPASSWD:ALL" ]
   shell: /bin/bash
   ssh-authorized-keys:
+  - ${tls_private_key.installkey.public_key_openssh}
+- name: root
+  ssh_authorized_keys:
   - ${tls_private_key.installkey.public_key_openssh}
 fqdn:  ${format("${var.instance_name}-master%02d", count.index + 1) }.${random_id.clusterid.hex}.${var.private_domain}
 manage_resolv_conf: true
@@ -262,6 +283,9 @@ write_files:
   permissions: '0755'
   encoding: b64
   content: ${base64encode(file("${path.module}/scripts/bootstrap-node.sh"))}
+bootcmd:
+- sed -i 's/SELINUX=enforcing/SELINUX=permissive/g' /etc/sysconfig/selinux
+- setenforce permissive
 runcmd:
 - /tmp/bootstrap-node.sh -c ${aws_s3_bucket.icp_config_backup.id} -s "bootstrap.sh"
 - /tmp/icp_scripts/bootstrap.sh ${local.docker_package_uri != "" ? "-p ${local.docker_package_uri}" : "" } -d /dev/xvdx ${local.image_package_uri != "" ? "-i ${local.image_package_uri}" : "" } -s ${var.icp_inception_image} ${length(var.patch_images) > 0 ? "-a \"${join(" ", var.patch_images)}\"" : "" }
@@ -334,6 +358,9 @@ write_files:
   permissions: '0755'
   encoding: b64
   content: ${base64encode(file("${path.module}/scripts/bootstrap-node.sh"))}
+bootcmd:
+- sed -i 's/SELINUX=enforcing/SELINUX=permissive/g' /etc/sysconfig/selinux
+- setenforce permissive
 runcmd:
 - /tmp/bootstrap-node.sh -c ${aws_s3_bucket.icp_config_backup.id} -s "bootstrap.sh"
 - /tmp/icp_scripts/bootstrap.sh ${local.docker_package_uri != "" ? "-p ${local.docker_package_uri}" : "" } -d /dev/xvdx ${local.image_package_uri != "" ? "-i ${local.image_package_uri}" : "" } -s ${var.icp_inception_image} ${length(var.patch_images) > 0 ? "-a \"${join(" ", var.patch_images)}\"" : "" }
@@ -406,6 +433,9 @@ write_files:
   permissions: '0755'
   encoding: b64
   content: ${base64encode(file("${path.module}/scripts/bootstrap-node.sh"))}
+bootcmd:
+- sed -i 's/SELINUX=enforcing/SELINUX=permissive/g' /etc/sysconfig/selinux
+- setenforce permissive
 runcmd:
 - /tmp/bootstrap-node.sh -c ${aws_s3_bucket.icp_config_backup.id} -s "bootstrap.sh"
 - /tmp/icp_scripts/bootstrap.sh ${local.docker_package_uri != "" ? "-p ${local.docker_package_uri}" : "" } -d /dev/xvdx ${local.image_package_uri != "" ? "-i ${local.image_package_uri}" : "" } -s ${var.icp_inception_image} ${length(var.patch_images) > 0 ? "-a \"${join(" ", var.patch_images)}\"" : "" }
@@ -463,6 +493,19 @@ resource "aws_instance" "icpnodes" {
     volume_type       = "gp2"
   }
 
+  ebs_block_device {
+    device_name       = "/dev/xvdb"
+    volume_size       = "${var.worker["ibm_vol"]}"
+    volume_type       = "gp2"
+  }
+
+
+  ebs_block_device {
+    device_name       = "/dev/xvdc"
+    volume_size       = "${var.worker["data_vol"]}"
+    volume_type       = "gp2"
+  }
+
   tags = "${merge(
     var.default_tags,
     map("Name",  "${format("${var.instance_name}-${random_id.clusterid.hex}-worker%02d", count.index + 1) }"),
@@ -481,9 +524,13 @@ write_files:
   permissions: '0755'
   encoding: b64
   content: ${base64encode(file("${path.module}/scripts/bootstrap-node.sh"))}
+bootcmd:
+- sed -i 's/SELINUX=enforcing/SELINUX=permissive/g' /etc/sysconfig/selinux
+- setenforce permissive
 runcmd:
 - /tmp/bootstrap-node.sh -c ${aws_s3_bucket.icp_config_backup.id} -s "bootstrap.sh"
 - /tmp/icp_scripts/bootstrap.sh ${local.docker_package_uri != "" ? "-p ${local.docker_package_uri}" : "" } -d /dev/xvdx ${local.image_package_uri != "" ? "-i ${local.image_package_uri}" : "" } -s ${var.icp_inception_image} ${length(var.patch_images) > 0 ? "-a \"${join(" ", var.patch_images)}\"" : "" }
+disable_root: false
 users:
 - default
 - name: icpdeploy
@@ -491,6 +538,9 @@ users:
   sudo: [ "ALL=(ALL) NOPASSWD:ALL" ]
   shell: /bin/bash
   ssh-authorized-keys:
+  - ${tls_private_key.installkey.public_key_openssh}
+- name: root
+  ssh_authorized_keys:
   - ${tls_private_key.installkey.public_key_openssh}
 fqdn: ${format("${var.instance_name}-worker%02d", count.index + 1) }.${random_id.clusterid.hex}.${var.private_domain}
 manage_resolv_conf: true

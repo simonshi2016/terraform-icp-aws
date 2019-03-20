@@ -87,6 +87,7 @@ variable "master" {
     ami       = "" // Leave blank to let terraform search for Ubuntu 16.04 ami. NOT RECOMMENDED FOR PRODUCTION
     disk      = "300" //GB
     docker_vol = "100" // GB
+    ibm_vol   = "300" //GB
     ebs_optimized = true    // not all instance types support EBS optimized
   }
 }
@@ -122,6 +123,8 @@ variable "worker" {
     ami       = "" // Leave blank to let terraform search for Ubuntu 16.04 ami. NOT RECOMMENDED FOR PRODUCTION
     disk      = "150" //GB
     docker_vol = "100" // GB
+    ibm_vol   = "300" // GB
+    data_vol  = "300" // GB
     ebs_optimized = true    // not all instance types support EBS optimized
   }
 }
@@ -204,6 +207,13 @@ variable "enable_autoscaling" {
   default = false
 }
 
+variable "allowed_cidr_master_22" {
+  type = "list"
+  default = [
+    "0.0.0.0/0"
+  ]
+}
+
 variable "allowed_cidr_master_8001" {
   type = "list"
   default = [
@@ -255,4 +265,12 @@ variable "allowed_cidr_bastion_22" {
 
 variable "use_aws_cloudprovider" {
   default = "true"
+}
+
+variable "icp4d_installer" {
+  default = ""
+}
+
+variable "user_password" {
+  default = ""
 }

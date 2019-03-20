@@ -156,9 +156,10 @@ image_load() {
       echo "Load docker images from ${image_location} ..."
       #TODO Is this install directory parameterized?
       IMAGE_DIR=/opt/ibm/cluster/images
+      IMAGE_NAME=$(basename ${image_location})
       mkdir -p ${IMAGE_DIR}
-      ${awscli} s3 cp ${image_location} ${IMAGE_DIR}/ibm-cloud-private-x86_64-3.1.0.tar.gz 
-      tar zxf ${IMAGE_DIR}/ibm-cloud-private-x86_64-3.1.0.tar.gz -O | docker load
+      ${awscli} s3 cp ${image_location} ${IMAGE_DIR}/${IMAGE_NAME} 
+      tar zxf ${IMAGE_DIR}/${IMAGE_NAME} -O | docker load
     fi
   fi
 

@@ -42,6 +42,14 @@ resource "aws_lb_target_group" "icp-registry-8600" {
   vpc_id = "${aws_vpc.icp_vpc.id}"
 }
 
+resource "aws_lb_target_group" "icp-ssh-22" {
+  name = "icp-${random_id.clusterid.hex}-master-22-tg"
+  port = 22
+  protocol = "TCP"
+  tags = "${var.default_tags}"
+  vpc_id = "${aws_vpc.icp_vpc.id}"
+}
+
 resource "aws_lb_listener" "icp-console-8443" {
   load_balancer_arn = "${aws_lb.icp-console.arn}"
   port = "8443"
@@ -64,6 +72,16 @@ resource "aws_lb_listener" "icp-console-9443" {
   }
 }
 
+resource "aws_lb_listener" "icp-ssh-22" {
+  load_balancer_arn = "${aws_lb.icp-console.arn}"
+  port = "22"
+  protocol = "TCP"
+
+  default_action {
+    target_group_arn = "${aws_lb_target_group.icp-ssh-22.arn}"
+    type = "forward"
+  }
+}
 
 resource "aws_lb_listener" "icp-registry-8500" {
   load_balancer_arn = "${aws_lb.icp-console.arn}"
@@ -130,6 +148,12 @@ resource "aws_lb_target_group_attachment" "master-8600" {
   target_group_arn = "${aws_lb_target_group.icp-registry-8600.arn}"
   target_id = "${element(aws_instance.icpmaster.*.id, count.index)}"
   port = 8600
+}
+
+resource "aws_lb_target_group_attachment" "master-22" {
+  target_group_arn = "${aws_lb_target_group.icp-ssh-22.arn}"
+  target_id = "${aws_instance.icpmaster.0.id}"
+  port = 22
 }
 
 resource "aws_lb" "icp-console" {

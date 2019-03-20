@@ -115,6 +115,18 @@ resource "aws_s3_bucket_object" "start_install" {
   source = "${path.module}/scripts/start_install.sh"
 }
 
+resource "aws_s3_bucket_object" "part_disk" {
+  bucket = "${aws_s3_bucket.icp_config_backup.id}"
+  key    = "scripts/part_disk.sh"
+  source = "${path.module}/scripts/part_disk.sh"
+}
+
+resource "aws_s3_bucket_object" "generate_wdp_conf" {
+  bucket = "${aws_s3_bucket.icp_config_backup.id}"
+  key    = "scripts/generate_wdp_conf.sh"
+  source = "${path.module}/scripts/generate_wdp_conf.sh"
+}
+
 # lock down bucket access to just my VPC and terraform user
 resource "aws_s3_bucket_policy" "icp_config_backup_policy_allow_vpc" {
   bucket = "${aws_s3_bucket.icp_config_backup.id}"
