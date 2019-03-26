@@ -179,10 +179,13 @@ write_files:
   permissions: '0755'
   encoding: b64
   content: ${base64encode(file("${path.module}/scripts/bootstrap-node.sh"))}
+${count.index == 0 ? "
 - path: /root/.ssh/installkey
-  permission: '0600'
+  permissions: '0600'
   encoding: b64
-  content: ${base64encode("${tls_private_key.installkey.private_key_pem}")}
+  content: ${base64encode("${tls_private_key.installkey.private_key_pem}")}"
+  : ""
+}
 bootcmd:
 - sed -i 's/SELINUX=enforcing/SELINUX=permissive/g' /etc/sysconfig/selinux
 - setenforce permissive
