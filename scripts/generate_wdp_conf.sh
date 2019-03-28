@@ -70,7 +70,7 @@ if [[ $master4all -ne 0 ]];then
     for((i=0;i<${#workers[@]};i++));do
         echo "worker_node_$((i+1))=${workers[i]}" >> /tmp/wdp.conf
         echo "worker_node_path_$((i+1))=/ibm" >> /tmp/wdp.conf
-        if [[ "$nfs_mount" == "" ]];then
+        if [[ "$nfs_mount" == "" ]] && [[ $i -lt 3 ]];then
             echo "worker_node_data_$((i+1))=/data" >> /tmp/wdp.conf
         fi
         ssh -o StrictHostKeyChecking=no -i ${ssh_key} "${ssh_user}@${workers[i]}" "sudo /tmp/icp_scripts/part_disk.sh /ibm /dev/xvdb"
