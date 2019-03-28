@@ -233,6 +233,8 @@ resolv_conf:
 EOF
 }
 
+# upload icp4d install package and kick off install
+
 resource "aws_instance" "icpproxy" {
   depends_on = [
     "aws_route_table_association.a",

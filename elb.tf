@@ -236,3 +236,27 @@ resource "aws_lb_target_group_attachment" "master-31843" {
   target_id = "${element(aws_instance.icpmaster.*.id, count.index)}"
   port = 31843
 }
+
+resource "aws_lb_target_group" "icp4d-ssh-22" {
+  name = "icp-${random_id.clusterid.hex}-master-22-tg"
+  port = 22
+  protocol = "TCP"
+  tags = "${var.default_tags}"
+  vpc_id = "${aws_vpc.icp_vpc.id}"
+}
+
+resource "aws_lb_listener" "icp4d-ssh-22" {
+  load_balancer_arn = "${aws_lb.icp-console.arn}"
+  port = "22"
+  protocol = "TCP"
+  default_action {
+    target_group_arn = "${aws_lb_target_group.icp4d-ssh-22.arn}"
+    type = "forward"
+  }
+}
+
+resource "aws_lb_target_group_attachment" "master-22" {
+  target_group_arn = "${aws_lb_target_group.icp4d-ssh-22.arn}"
+  target_id = "${element(aws_instance.icpmaster.0.id, count.index)}"
+  port = 22
+}
