@@ -28,7 +28,6 @@ override.tf.json
 
 awscli/*
 =======
-# .tfvars files
 *.tfvars
 
 # generated key files

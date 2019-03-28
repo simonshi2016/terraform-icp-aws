@@ -42,14 +42,6 @@ resource "aws_lb_target_group" "icp-registry-8600" {
   vpc_id = "${aws_vpc.icp_vpc.id}"
 }
 
-resource "aws_lb_target_group" "icp-ssh-22" {
-  name = "icp-${random_id.clusterid.hex}-master-22-tg"
-  port = 22
-  protocol = "TCP"
-  tags = "${var.default_tags}"
-  vpc_id = "${aws_vpc.icp_vpc.id}"
-}
-
 resource "aws_lb_listener" "icp-console-8443" {
   load_balancer_arn = "${aws_lb.icp-console.arn}"
   port = "8443"
@@ -68,17 +60,6 @@ resource "aws_lb_listener" "icp-console-9443" {
 
   default_action {
     target_group_arn = "${aws_lb_target_group.icp-console-9443.arn}"
-    type = "forward"
-  }
-}
-
-resource "aws_lb_listener" "icp-ssh-22" {
-  load_balancer_arn = "${aws_lb.icp-console.arn}"
-  port = "22"
-  protocol = "TCP"
-
-  default_action {
-    target_group_arn = "${aws_lb_target_group.icp-ssh-22.arn}"
     type = "forward"
   }
 }
@@ -150,12 +131,6 @@ resource "aws_lb_target_group_attachment" "master-8600" {
   port = 8600
 }
 
-resource "aws_lb_target_group_attachment" "master-22" {
-  target_group_arn = "${aws_lb_target_group.icp-ssh-22.arn}"
-  target_id = "${aws_instance.icpmaster.0.id}"
-  port = 22
-}
-
 resource "aws_lb" "icp-console" {
   depends_on = [
     "aws_internet_gateway.icp_gw"
@@ -204,7 +179,7 @@ resource "aws_lb_target_group_attachment" "icp-proxy-80" {
 }
 
 resource "aws_lb_listener" "icp-proxy-443" {
-  load_balancer_arn = "${aws_lb.icp-proxy.arn}"
+  load_balancer_arn = "${aws_lb.icp-console.arn}"
   port = "443"
   protocol = "TCP"
 
@@ -213,8 +188,9 @@ resource "aws_lb_listener" "icp-proxy-443" {
     type = "forward"
   }
 }
+
 resource "aws_lb_listener" "icp-proxy-80" {
-  load_balancer_arn = "${aws_lb.icp-proxy.arn}"
+  load_balancer_arn = "${aws_lb.icp-console.arn}"
   port = "80"
   protocol = "TCP"
   default_action {
@@ -235,4 +211,28 @@ resource "aws_lb" "icp-proxy" {
   subnets = [ "${aws_subnet.icp_public_subnet.*.id}" ]
 
   tags = "${var.default_tags}"
+}
+
+resource "aws_lb_target_group" "icp4d-adminconsole-31843" {
+  name = "icp-${random_id.clusterid.hex}-master-31843-tg"
+  port = 31843
+  protocol = "TCP"
+  tags = "${var.default_tags}"
+  vpc_id = "${aws_vpc.icp_vpc.id}"
+}
+
+resource "aws_lb_listener" "icp4d-adminconsole-31843" {
+  load_balancer_arn = "${aws_lb.icp-console.arn}"
+  port = "31843"
+  protocol = "TCP"
+  default_action {
+    target_group_arn = "${aws_lb_target_group.icp4d-adminconsole-31843.arn}"
+    type = "forward"
+  }
+}
+
+resource "aws_lb_target_group_attachment" "master-31843" {
+  target_group_arn = "${aws_lb_target_group.icp4d-adminconsole-31843.arn}"
+  target_id = "${element(aws_instance.icpmaster.*.id, count.index)}"
+  port = 31843
 }

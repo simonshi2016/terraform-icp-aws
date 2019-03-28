@@ -49,7 +49,7 @@ resource "aws_s3_bucket_object" "icp_config_yaml" {
   bucket = "${aws_s3_bucket.icp_config_backup.id}"
   key    = "icp-terraform-config.yaml"
   content = <<EOF
-kubelet_nodename: nodename
+kubelet_nodename: fqdn
 ${var.use_aws_cloudprovider ? "cloud_provider: aws" : "" }
 calico_tunnel_mtu: 8981
 ansible_user: icpdeploy
