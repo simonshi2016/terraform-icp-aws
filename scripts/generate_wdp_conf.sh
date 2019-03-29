@@ -83,6 +83,8 @@ if [[ "$nfs_mount" != "" ]];then
 fi
 
 echo "ssh_port=22" >> /tmp/wdp.conf
+echo "suppress_warning=true" >> /tmp/wdp.conf
+
 # add cloud additional data
 admin_pwd=$(grep default_admin_password /opt/ibm/cluster/config.yaml | awk -F: '{print $2}')
 echo "cloud=aws" >> /tmp/wdp.conf

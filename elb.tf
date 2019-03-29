@@ -257,6 +257,6 @@ resource "aws_lb_listener" "icp4d-ssh-22" {
 
 resource "aws_lb_target_group_attachment" "master-22" {
   target_group_arn = "${aws_lb_target_group.icp4d-ssh-22.arn}"
-  target_id = "${element(aws_instance.icpmaster.0.id, count.index)}"
+  target_id = "${element(aws_instance.icpmaster.*.id, 0)}"
   port = 22
 }
