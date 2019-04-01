@@ -197,7 +197,7 @@ ${count.index == 0 ? "
   :
 "" }
 ${count.index == 0 ? "
-- /tmp/icp_scripts/generate_wdp_conf.sh ${aws_lb.icp-console.dns_name} ${aws_lb.icp-proxy.dns_name} ${aws_lb.icp-console.dns_name} icpdeploy '/root/.ssh/installkey' ${aws_s3_bucket.icp_config_backup.id} ${var.icp4d_installer}"
+- /tmp/icp_scripts/generate_wdp_conf.sh ${aws_lb.icp-console.dns_name} ${aws_lb.icp-console.dns_name} ${aws_lb.icp-console.dns_name} icpdeploy '/root/.ssh/installkey' ${aws_s3_bucket.icp_config_backup.id} ${var.icp4d_installer}"
 :
 "" }
 ${count.index == 0 && var.enable_autoscaling ? "
