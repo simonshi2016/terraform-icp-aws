@@ -99,7 +99,6 @@ docker_install() {
 }
 EOF
     mv /tmp/daemon.json /etc/docker/daemon.json
-
     systemctl daemon-reload
   fi
 
@@ -120,6 +119,21 @@ EOF
     sudo mv /var/lib/docker.bk/* /var/lib/docker
     rm -rf /var/lib/docker.bk
     systemctl start docker
+  fi
+
+  if [[ -f /lib/systemd/system/docker.service ]];then
+    if ! grep 'native.cgroupdriver=systemd' /lib/systemd/system/docker.service > /dev/null 2>&1; then
+      systemctl disable docker
+      systemctl stop docker
+      if grep 'native.cgroupdriver=cgroupfs' /lib/systemd/system/docker.service > /dev/null 2>&1;then
+        sed -i.bkp "s/native.cgroupdriver=cgroupfs/native.cgroupdriver=systemd/g" /lib/systemd/system/docker.service
+      else
+        sed -i.bkp -E "s/^ExecStart=(.*)$/ExecStart=\1 --exec-opt native.cgroupdriver=systemd/g" /lib/systemd/system/docker.service
+      fi
+      systemctl daemon-reload
+      systemctl enable docker
+      systemctl start docker
+    fi
   fi
 
   # docker takes a while to start because it needs to prepare the

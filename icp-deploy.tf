@@ -62,6 +62,7 @@ cluster_lb_address: ${aws_lb.icp-console.dns_name}
 cluster_CA_domain: ${var.user_provided_cert_dns != "" ? var.user_provided_cert_dns : aws_lb.icp-console.dns_name}
 disabled_management_services: [ "istio", "custom-metrics-adapter", "${var.va["nodes"] == 0 ? "va" : "" }", "${var.va["nodes"] == 0 ? "vulnerability-advisor": ""}" ]
 kibana_install: true
+kubelet_extra_args: ["--cgroup-driver=systemd"]
 EOF
 #  source = "${path.module}/items-config.yaml"
 }
