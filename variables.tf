@@ -87,7 +87,7 @@ variable "master" {
     ami       = "" // Leave blank to let terraform search for Ubuntu 16.04 ami. NOT RECOMMENDED FOR PRODUCTION
     disk      = "300" //GB
     docker_vol = "100" // GB
-    ibm_vol   = "300" //GB
+    ibm_vol   = "500" //GB
     ebs_optimized = true    // not all instance types support EBS optimized
   }
 }
