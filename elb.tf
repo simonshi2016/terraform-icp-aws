@@ -232,6 +232,7 @@ resource "aws_lb_listener" "icp4d-adminconsole-31843" {
 }
 
 resource "aws_lb_target_group_attachment" "master-31843" {
+  count = "${var.master["nodes"]}"
   target_group_arn = "${aws_lb_target_group.icp4d-adminconsole-31843.arn}"
   target_id = "${element(aws_instance.icpmaster.*.id, count.index)}"
   port = 31843
