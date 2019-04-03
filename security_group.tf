@@ -235,6 +235,29 @@ resource "aws_security_group_rule" "master-8600-ngw" {
     description = "allow icp to contact itself on registry endpoint over the nat gateway"
 }
 
+resource "aws_security_group_rule" "master-31843-ingress" {
+  count = "${length(var.allowed_cidr_master_31843)}"
+  type = "ingress"
+  from_port   = 31843
+  to_port     = 31843
+  protocol    = "tcp"
+  cidr_blocks = [
+    "${element(var.allowed_cidr_master_31843, count.index)}"
+  ]
+  security_group_id = "${aws_security_group.master.id}"
+}
+
+resource "aws_security_group_rule" "master-31843-ngw" {
+    count = "${length(var.azs)}"
+    type = "ingress"
+    from_port   = 31843
+    to_port     = 31843
+    protocol    = "tcp"
+    cidr_blocks = ["${element(aws_eip.icp_ngw_eip.*.public_ip, count.index)}/32"]
+    security_group_id = "${aws_security_group.master.id}"
+    description = "allow icp4d to contact itself on admin console over the nat gateway"
+}
+
 resource "aws_security_group" "master" {
   name = "icp-master-${random_id.clusterid.hex}"
   description = "ICP ${random_id.clusterid.hex} master nodes"

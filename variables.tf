@@ -242,6 +242,13 @@ variable "allowed_cidr_master_8600" {
   ]
 }
 
+variable "allowed_cidr_master_31843" {
+  type = "list"
+  default = [
+    "0.0.0.0/0"
+  ]
+}
+
 variable "allowed_cidr_proxy_80" {
   type = "list"
   default = [
