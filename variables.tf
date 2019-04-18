@@ -1,6 +1,6 @@
 ####### AWS Access and Region Details #############################
 variable "aws_region" {
-  default  = "us-east-2"
+  default  = ""
   description = "One of us-east-2, us-east-1, us-west-1, us-west-2, ap-south-1, ap-northeast-2, ap-southeast-1, ap-southeast-2, ap-northeast-1, us-west-2, eu-central-1, eu-west-1, eu-west-2, sa-east-1"
 }
 
@@ -72,7 +72,7 @@ variable "ami" { default = "" }
 variable "bastion" {
   type = "map"
   default = {
-    nodes     = "0"
+    nodes     = "1"
     type      = "t2.micro"
     ami       = "" // Leave blank to let terraform search for Ubuntu 16.04 ami. NOT RECOMMENDED FOR PRODUCTION
     disk      = "10" //GB
@@ -94,7 +94,7 @@ variable "master" {
 variable "proxy" {
   type = "map"
   default = {
-    nodes     = "3"
+    nodes     = "0"
     type      = "m4.xlarge"
     ami       = "" // Leave blank to let terraform search for Ubuntu 16.04 ami. NOT RECOMMENDED FOR PRODUCTION
     disk      = "150" //GB
@@ -106,7 +106,7 @@ variable "proxy" {
 variable "management" {
   type = "map"
   default = {
-    nodes     = "3"
+    nodes     = "0"
     type      = "m4.2xlarge"
     ami       = "" // Leave blank to let terraform search for Ubuntu 16.04 ami. NOT RECOMMENDED FOR PRODUCTION
     disk      = "300" //GB
@@ -132,7 +132,7 @@ variable "worker" {
 variable "va" {
   type = "map"
   default = {
-    nodes     = "3"
+    nodes     = "0"
     type      = "m4.2xlarge"
     ami       = "" // Leave blank to let terraform search for Ubuntu 16.04 ami. NOT RECOMMENDED FOR PRODUCTION
     disk      = "300" //GB
@@ -142,7 +142,7 @@ variable "va" {
 }
 
 variable "instance_name" { default = "icp" }
-variable "icppassword" { default = "MySecretP4ssw0RD" }
+variable "icppassword" { default = "Passw0rdPassw0rdPassw0rdPassw0rd" }
 
 variable "docker_package_location" {
   description = "When installing ICP EE on RedHat. Prefix location string with http: or nfs: to indicate protocol "
@@ -274,7 +274,7 @@ variable "use_aws_cloudprovider" {
   default = "true"
 }
 
-variable "icp4d_installer" {
+variable "image_location_icp4d" {
   default = ""
 }
 

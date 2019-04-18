@@ -23,9 +23,10 @@ if [ ! -z $awscli ]; then
   exit 0;
 fi
 
+
 curl "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip" -o "awscli-bundle.zip"
 unzip awscli-bundle.zip
-./awscli-bundle/install -i ${path.module}/awscli -b ${path.module}/awscli/bin/aws
+./awscli-bundle/install -i ${path.module}/awscli -b ${path.module}/aws
 
 EOF
   }

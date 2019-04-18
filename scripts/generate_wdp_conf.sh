@@ -4,9 +4,7 @@ proxy_lb=$2
 cluster_domain=$3
 ssh_user=$4
 ssh_key=$5
-s3_config_bucket=$6
-icp4d_installer=$7
-nfs_mount=$8
+nfs_mount=$6
 #server:/data
 
 function getIPs {
@@ -93,15 +91,3 @@ echo "cloud_data=${cluster_domain},${admin_pwd}" >> /tmp/wdp.conf
 scp -i ${ssh_key} -o StrictHostKeyChecking=no /tmp/wdp.conf ${ssh_user}@${master1_node}:~/
 ssh -i ${ssh_key} -o StrictHostKeyChecking=no ${ssh_user}@${master1_node} "sudo mkdir -p /ibm;sudo mv wdp.conf /ibm;sudo chown root:root /ibm/wdp.conf"
 
-#download icp4d installer
-awscli=$(which aws)
-if [[ $? -ne 0 ]];then
-    if [[ -e "/usr/local/bin/aws" ]];then
-        awscli="/usr/local/bin/aws"
-    fi
-fi
-if [[ "$awscli" != "" ]] && [[ "${icp4d_installer}" != "" ]];then
-    echo "downloading icp4d installer"
-    installer_name=$(basename $icp4d_installer)
-    ${awscli} s3 cp ${icp4d_installer} /ibm/${installer_name}
-fi

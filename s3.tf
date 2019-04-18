@@ -23,13 +23,33 @@ resource "null_resource" "icp_install_package" {
 
   provisioner "local-exec" {
     command = <<EOF
-${path.module}/awscli/bin/aws s3 cp ${var.image_location}  s3://${aws_s3_bucket.icp_binaries.id}/ibm-cloud-private.tar.gz
+#!/bin/bash
+${path.module}/awscli/bin/aws s3 cp ${var.image_location}  s3://${aws_s3_bucket.icp_binaries.id}/$(basename ${var.image_location})
 EOF
 
     # AWS credentials?
     environment = {
 
     }
+  }
+}
+
+resource "null_resource" "icp4d_install_package" {
+  count         = "${var.image_location_icp4d != "" && substr(var.image_location_icp4d, 0, min(2, length(var.image_location_icp4d))) != "s3" ? 1 : 0}"
+
+  depends_on = ["null_resource.install_aws_cli","null_resource.icp_install_package"]
+  # due to AWS provider not supporting multi-part uploads,
+  # we have to use the AWS CLI to upload the binary instead
+
+  provisioner "local-exec" {
+    command = <<EOF
+#!/bin/bash
+${path.module}/awscli/bin/aws s3 cp ${var.image_location_icp4d} s3://${aws_s3_bucket.icp_binaries.id}/$(basename ${var.image_location_icp4d})
+modules_dir=$(dirname ${var.image_location_icp4d})/modules
+if [ -d $modules_dir ];then
+  ${path.module}/awscli/bin/aws s3 sync $modules_dir s3://${aws_s3_bucket.icp_binaries.id}/modules
+fi
+EOF
   }
 }
 
@@ -69,7 +89,11 @@ resource "aws_s3_bucket_policy" "icp_binaries_allow_vpc" {
       "Effect": "Allow",
       "Resource": ["${aws_s3_bucket.icp_binaries.arn}",
                    "${aws_s3_bucket.icp_binaries.arn}/*"],
-      "Principal": "${data.aws_caller_identity.current.arn}"
+      "Principal": {
+         "AWS": [
+           "${data.aws_caller_identity.current.arn}"
+         ]
+       }
     }
   ]
 }
@@ -125,6 +149,12 @@ resource "aws_s3_bucket_object" "generate_wdp_conf" {
   bucket = "${aws_s3_bucket.icp_config_backup.id}"
   key    = "scripts/generate_wdp_conf.sh"
   source = "${path.module}/scripts/generate_wdp_conf.sh"
+}
+
+resource "aws_s3_bucket_object" "install_icp4d" {
+  bucket = "${aws_s3_bucket.icp_config_backup.id}"
+  key    = "scripts/install_icp4d.sh"
+  source = "${path.module}/scripts/install_icp4d.sh"
 }
 
 # lock down bucket access to just my VPC and terraform user

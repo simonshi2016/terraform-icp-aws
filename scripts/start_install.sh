@@ -114,6 +114,8 @@ chmod 400 /opt/ibm/cluster/ssh_key
 myip=`ip route get 8.8.8.8 | awk 'NR==1 {print $NF}'`
 
 # wait for all hosts in the cluster to finish cloud-init
+# when script is moved out, wait for cloud-init to finish on its own as well
+#  -i /installer/cluster/hosts all:\!${myip} \
 docker run \
   -e ANSIBLE_HOST_KEY_CHECKING=false \
   -v /opt/ibm/cluster:/installer/cluster \
@@ -121,7 +123,7 @@ docker run \
   --net=host \
   -t \
   ${inception_image} \
-  -i /installer/cluster/hosts all:\!${myip} \
+  -i /installer/cluster/hosts all \
   --private-key /installer/cluster/ssh_key \
   -u icpdeploy \
   -b \

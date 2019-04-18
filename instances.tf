@@ -11,7 +11,10 @@ locals  {
   efs_registry_mountpoints = "${concat(aws_efs_mount_target.icp-registry.*.dns_name, list(""))}"
   image_package_uri = "${substr(var.image_location, 0, min(2, length(var.image_location))) == "s3" ?
     var.image_location :
-      var.image_location  == "" ? "" : "s3://${element(concat(aws_s3_bucket.icp_binaries.*.id, list("")), 0)}/ibm-cloud-private.tar.gz"}"
+      var.image_location  == "" ? "" : "s3://${element(concat(aws_s3_bucket.icp_binaries.*.id, list("")), 0)}/${basename(var.image_location)}"}"
+  image_icp4d_uri = "${substr(var.image_location_icp4d, 0, min(2, length(var.image_location_icp4d))) == "s3" ?
+    var.image_location_icp4d :
+      var.image_location_icp4d  == "" ? "" : "s3://${element(concat(aws_s3_bucket.icp_binaries.*.id, list("")), 0)}/${basename(var.image_location_icp4d)}"}"
   docker_package_uri = "${substr(var.docker_package_location, 0, min(2, length(var.docker_package_location))) == "s3" ?
     var.docker_package_location :
       var.docker_package_location == "" ? "" : "s3://${element(concat(aws_s3_bucket.icp_binaries.*.id, list("")), 0)}/icp-docker.bin"}"
@@ -103,6 +106,12 @@ resource "aws_instance" "bastion" {
 fqdn: ${format("${var.instance_name}-bastion%02d", count.index + 1)}.${random_id.clusterid.hex}.${var.private_domain}
 users:
 - default
+- name: icpdeploy
+  groups: [ wheel ]
+  sudo: [ "ALL=(ALL) NOPASSWD:ALL" ]
+  shell: /bin/bash
+  ssh-authorized-keys:
+  - ${tls_private_key.installkey.public_key_openssh}
 manage_resolv_conf: true
 resolv_conf:
   nameservers: [ ${cidrhost(element(aws_subnet.icp_private_subnet.*.cidr_block, count.index), 2)}]
@@ -190,20 +199,10 @@ bootcmd:
 - sed -i 's/SELINUX=enforcing/SELINUX=permissive/g' /etc/sysconfig/selinux
 - setenforce permissive
 runcmd:
-- /tmp/bootstrap-node.sh -c ${aws_s3_bucket.icp_config_backup.id} -s "bootstrap.sh functions.sh ${count.index == 0 ? "start_install.sh" : ""} ${count.index == 0 && var.enable_autoscaling ? "create_client_cert.sh" : ""}"
+${count.index > 0 ? "
+- /tmp/bootstrap-node.sh -c ${aws_s3_bucket.icp_config_backup.id} -s \"bootstrap.sh functions.sh ${count.index == 0 ? "start_install.sh" : ""} ${count.index == 0 && var.enable_autoscaling ? "create_client_cert.sh" : ""}\"
 - /tmp/icp_scripts/bootstrap.sh ${local.docker_package_uri != "" ? "-p ${local.docker_package_uri}" : "" } -d /dev/xvdx ${local.image_package_uri != "" ? "-i ${local.image_package_uri}" : "" } -s ${var.icp_inception_image} ${length(var.patch_images) > 0 ? "-a \"${join(" ", var.patch_images)}\"" : "" }
-${count.index == 0 ? "
-- /tmp/icp_scripts/start_install.sh -i ${var.icp_inception_image} -c ${aws_s3_bucket.icp_config_backup.id} -r ${aws_s3_bucket.icp_registry.id} ${length(var.patch_scripts) > 0 ? "-s \"${join(" ", var.patch_scripts)}\"" : "" }"
-  :
-"" }
-${count.index == 0 ? "
-- /tmp/icp_scripts/generate_wdp_conf.sh ${aws_lb.icp-console.dns_name} ${aws_lb.icp-console.dns_name} ${aws_lb.icp-console.dns_name} icpdeploy '/root/.ssh/installkey' ${aws_s3_bucket.icp_config_backup.id} ${var.icp4d_installer}"
-:
-"" }
-${count.index == 0 && var.enable_autoscaling ? "
-- /tmp/icp_scripts/create_client_cert.sh -i ${var.icp_inception_image} -b ${aws_s3_bucket.icp_config_backup.id}"
-  :
-"" }
+" : "" }
 ${var.master["nodes"] > 1 ? "
 mounts:
   - ['${element(local.efs_registry_mountpoints, count.index)}:/', '/var/lib/registry', 'nfs4', 'nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2', '0', '0']
@@ -231,6 +230,46 @@ resolv_conf:
   searchdomains:
   - ${random_id.clusterid.hex}.${var.private_domain}
 EOF
+}
+
+resource "null_resource" "master_install_icp" {
+    depends_on=["aws_instance.icpmaster","aws_instance.bastion"]
+
+    connection {
+      host = "${element(aws_instance.icpmaster.*.private_ip,0)}"
+      user = "icpdeploy"
+      private_key = "${tls_private_key.installkey.private_key_pem}"
+      agent = "false"
+      bastion_host="${element(aws_instance.bastion.*.public_ip,0)}"
+    }
+
+    provisioner "remote-exec" {
+      inline = [
+        "sudo /tmp/bootstrap-node.sh -c ${aws_s3_bucket.icp_config_backup.id} -s \"bootstrap.sh functions.sh ${count.index == 0 ? "start_install.sh" : ""} ${count.index == 0 && var.enable_autoscaling ? "create_client_cert.sh" : ""}\"",
+        "sudo /tmp/icp_scripts/bootstrap.sh ${local.docker_package_uri != "" ? "-p ${local.docker_package_uri}" : "" } -d /dev/xvdx ${local.image_package_uri != "" ? "-i ${local.image_package_uri}" : "" } -s ${var.icp_inception_image} ${length(var.patch_images) > 0 ? "-a \"${join(" ", var.patch_images)}\"" : "" }",
+        "sudo /tmp/icp_scripts/start_install.sh -i ${var.icp_inception_image} -c ${aws_s3_bucket.icp_config_backup.id} -r ${aws_s3_bucket.icp_registry.id} ${length(var.patch_scripts) > 0 ? "-s \"${join(" ", var.patch_scripts)}\"" : "" }",
+        "${var.enable_autoscaling ? "sudo /tmp/icp_scripts/create_client_cert.sh -i ${var.icp_inception_image} -b ${aws_s3_bucket.icp_config_backup.id}" : "echo -n" }"
+      ]
+  }
+}
+
+resource "null_resource" "master_install_icp4d" {
+    depends_on=["null_resource.icp4d_install_package","null_resource.master_install_icp"]
+
+    connection {
+      host = "${element(aws_instance.icpmaster.*.private_ip,0)}"
+      user = "icpdeploy"
+      private_key = "${tls_private_key.installkey.private_key_pem}"
+      agent = "false"
+      bastion_host="${element(aws_instance.bastion.*.public_ip,0)}"
+    }
+
+    provisioner "remote-exec" {
+      inline = [
+        "sudo bash /tmp/icp_scripts/generate_wdp_conf.sh ${aws_lb.icp-console.dns_name} ${aws_lb.icp-console.dns_name} ${aws_lb.icp-console.dns_name} icpdeploy '/root/.ssh/installkey'",
+        "sudo bash /tmp/icp_scripts/install_icp4d.sh ${local.image_icp4d_uri} ${var.image_location_icp4d}"
+      ]
+    }
 }
 
 # upload icp4d install package and kick off install
