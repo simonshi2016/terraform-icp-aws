@@ -60,7 +60,9 @@ for((i=0;i<${#masters[@]};i++));do
     ssh -o StrictHostKeyChecking=no -i ${ssh_key} "${ssh_user}@${masters[i]}" "sudo /tmp/icp_scripts/part_disk.sh /ibm /dev/xvdb"
 	if [[ $master4all -eq 0 ]];then
 		echo "node_data_$((i+1))=/data" >> /tmp/wdp.conf
-        ssh -o StrictHostKeyChecking=no -i ${ssh_key} "${ssh_user}@${masters[i]}" "sudo /tmp/icp_scripts/part_disk.sh /data /dev/xvdc"
+        if [[ "$nfs_mount" == "" ]];then
+            ssh -o StrictHostKeyChecking=no -i ${ssh_key} "${ssh_user}@${masters[i]}" "sudo /tmp/icp_scripts/part_disk.sh /data /dev/xvdc"
+        fi
 	fi
 done
 
@@ -72,7 +74,9 @@ if [[ $master4all -ne 0 ]];then
             echo "worker_node_data_$((i+1))=/data" >> /tmp/wdp.conf
         fi
         ssh -o StrictHostKeyChecking=no -i ${ssh_key} "${ssh_user}@${workers[i]}" "sudo /tmp/icp_scripts/part_disk.sh /ibm /dev/xvdb"
-        ssh -o StrictHostKeyChecking=no -i ${ssh_key} "${ssh_user}@${workers[i]}" "sudo /tmp/icp_scripts/part_disk.sh /data /dev/xvdc"
+        if [[ "$nfs_mount" == "" ]];then
+            ssh -o StrictHostKeyChecking=no -i ${ssh_key} "${ssh_user}@${workers[i]}" "sudo /tmp/icp_scripts/part_disk.sh /data /dev/xvdc"
+        fi
     done
 fi
 

@@ -530,27 +530,7 @@ resource "aws_instance" "icpnodes" {
   root_block_device {
     volume_size = "${var.worker["disk"]}"
   }
-
-  # docker direct-lvm volume
-  ebs_block_device {
-    device_name       = "/dev/xvdx"
-    volume_size       = "${var.worker["docker_vol"]}"
-    volume_type       = "gp2"
-  }
-
-  ebs_block_device {
-    device_name       = "/dev/xvdb"
-    volume_size       = "${var.worker["ibm_vol"]}"
-    volume_type       = "gp2"
-  }
-
-
-  ebs_block_device {
-    device_name       = "/dev/xvdc"
-    volume_size       = "${var.worker["data_vol"]}"
-    volume_type       = "gp2"
-  }
-
+  
   tags = "${merge(
     var.default_tags,
     map("Name",  "${format("${var.instance_name}-${random_id.clusterid.hex}-worker%02d", count.index + 1) }"),
@@ -595,6 +575,54 @@ resolv_conf:
   searchdomains:
   - ${random_id.clusterid.hex}.${var.private_domain}
 EOF
+}
+
+resource "aws_ebs_volume" "icpnodes_docker_ebs" {
+  count = "${var.worker["nodes"]}"
+  availability_zone = "${format("%s%s", element(list(var.aws_region), count.index), element(var.azs, count.index))}"
+  size  = "${var.worker["docker_vol"]}"
+  type  = "gp2"
+}
+
+resource "aws_volume_attachment" "icpnodes_docker_ebs_att" {
+  count = "${var.worker["nodes"]}"
+  device_name = "/dev/xvdx"
+  volume_id   = "${element(aws_ebs_volume.icpnodes_docker_ebs.*.id,count.index)}"
+  instance_id = "${element(aws_instance.icpnodes.*.id,count.index)}"
+  skip_destroy = false
+  force_detach = true
+}
+
+resource "aws_ebs_volume" "icpnodes_ibm_ebs" {
+  count = "${var.worker["nodes"]}"
+  availability_zone = "${format("%s%s", element(list(var.aws_region), count.index), element(var.azs, count.index))}"
+  size  = "${var.worker["ibm_vol"]}"
+  type  = "gp2"
+}
+
+resource "aws_volume_attachment" "icpnodes_ibm_ebs_att" {
+  count = "${var.worker["nodes"]}"
+  device_name = "/dev/xvdb"
+  volume_id   = "${element(aws_ebs_volume.icpnodes_ibm_ebs.*.id,count.index)}"
+  instance_id = "${element(aws_instance.icpnodes.*.id,count.index)}"
+  skip_destroy = false
+  force_detach = true
+}
+
+resource "aws_ebs_volume" "icpnodes_data_ebs" {
+  count = "${var.icp4d_storage_efs == 0 ? var.worker["nodes"] : 0 }"
+  availability_zone = "${format("%s%s", element(list(var.aws_region), count.index), element(var.azs, count.index))}"
+  size  = "${var.worker["data_vol"]}"
+  type  = "gp2"
+}
+
+resource "aws_volume_attachment" "icpnodes_data_ebs_att" {
+  count = "${var.icp4d_storage_efs == 0 ? var.worker["nodes"] : 0 }"
+  device_name = "/dev/xvdc"
+  volume_id   = "${element(aws_ebs_volume.icpnodes_data_ebs.*.id,count.index)}"
+  instance_id = "${element(aws_instance.icpnodes.*.id,count.index)}"
+  skip_destroy = false
+  force_detach = true
 }
 
 output "bootmaster" {
