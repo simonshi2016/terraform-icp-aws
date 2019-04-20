@@ -352,3 +352,30 @@ resource "aws_security_group" "icp-audit-mount" {
   )}"
 }
 
+resource "aws_security_group" "icp4d-data-mount" {
+  count = "${var.icp4d_storage_efs != "0" ? 1 : 0 }"
+  name = "icp4d_efs_data_sg-${random_id.clusterid.hex}"
+  description = "allow incoming to EFS from worker nodes"
+  vpc_id = "${aws_vpc.icp_vpc.id}"
+
+  ingress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    security_groups = [ "${aws_security_group.default.id}"]
+    self        = true
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    security_groups = [ "${aws_security_group.default.id}"]
+    self        = true
+  }
+
+  tags = "${merge(
+    var.default_tags,
+    map("Name", "icp4d-data-mount-sg-${random_id.clusterid.hex}")
+  )}"
+}

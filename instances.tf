@@ -9,6 +9,7 @@ locals  {
         element(concat(aws_iam_instance_profile.icp_ec2_instance_profile.*.id, list("")), 0)}"
   efs_audit_mountpoints = "${concat(aws_efs_mount_target.icp-audit.*.dns_name, list(""))}"
   efs_registry_mountpoints = "${concat(aws_efs_mount_target.icp-registry.*.dns_name, list(""))}"
+  efs_icp4d_mountpoints = "${var.icp4d_storage_efs != "0" ? "${element(concat(aws_efs_mount_target.icp4d-data.*.dns_name,list("")),0)}:/." : ""}"
   image_package_uri = "${substr(var.image_location, 0, min(2, length(var.image_location))) == "s3" ?
     var.image_location :
       var.image_location  == "" ? "" : "s3://${element(concat(aws_s3_bucket.icp_binaries.*.id, list("")), 0)}/${basename(var.image_location)}"}"
@@ -266,7 +267,7 @@ resource "null_resource" "master_install_icp4d" {
 
     provisioner "remote-exec" {
       inline = [
-        "sudo bash /tmp/icp_scripts/generate_wdp_conf.sh ${aws_lb.icp-console.dns_name} ${aws_lb.icp-console.dns_name} ${aws_lb.icp-console.dns_name} icpdeploy '/root/.ssh/installkey'",
+        "sudo bash /tmp/icp_scripts/generate_wdp_conf.sh ${aws_lb.icp-console.dns_name} ${aws_lb.icp-console.dns_name} ${aws_lb.icp-console.dns_name} icpdeploy '/root/.ssh/installkey' ${local.efs_icp4d_mountpoints}",
         "sudo bash /tmp/icp_scripts/install_icp4d.sh ${local.image_icp4d_uri} ${var.image_location_icp4d}"
       ]
     }

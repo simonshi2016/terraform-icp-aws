@@ -281,3 +281,7 @@ variable "image_location_icp4d" {
 variable "user_password" {
   default = ""
 }
+
+variable "icp4d_storage_efs" {
+  default = "0"
+} 

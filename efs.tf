@@ -29,3 +29,20 @@ resource "aws_efs_mount_target" "icp-audit" {
   subnet_id     = "${element(aws_subnet.icp_private_subnet.*.id, count.index)}"
   security_groups = [ "${aws_security_group.icp-audit-mount.id}"]
 }
+
+resource "aws_efs_file_system" "icp4d-data" {
+  count = "${var.icp4d_storage_efs != 0 ? 1 : 0 }"
+  creation_token = "icp4d-${random_id.clusterid.hex}-data"
+  tags = "${merge(
+    var.default_tags,
+    map("Name", "icp4d-data")
+  )}"
+}
+
+resource "aws_efs_mount_target" "icp4d-data" {
+  count = "${var.icp4d_storage_efs != "0" && var.master["nodes"] > 1 ? var.master["nodes"] : 0 }"
+
+  file_system_id = "${aws_efs_file_system.icp4d-data.id}"
+  subnet_id     = "${element(aws_subnet.icp_private_subnet.*.id, count.index)}"
+  security_groups = ["${aws_security_group.icp4d-data-mount.id}"]
+}
