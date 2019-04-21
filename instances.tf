@@ -122,6 +122,54 @@ resolv_conf:
 EOF
 }
 
+resource "aws_ebs_volume" "icpmaster_docker_ebs" {
+  count = "${var.master["nodes"]}"
+  availability_zone = "${format("%s%s", element(list(var.aws_region), count.index), element(var.azs, count.index))}"
+  size  = "${var.master["docker_vol"]}"
+  type  = "gp2"
+}
+
+resource "aws_volume_attachment" "icpmaster_docker_ebs_att" {
+  count = "${var.master["nodes"]}"
+  device_name = "/dev/xvdx"
+  volume_id   = "${element(aws_ebs_volume.icpmaster_docker_ebs.*.id,count.index)}"
+  instance_id = "${element(aws_instance.icpmaster.*.id,count.index)}"
+  skip_destroy = false
+  force_detach = true
+}
+
+resource "aws_ebs_volume" "icpmaster_ibm_ebs" {
+  count = "${var.master["nodes"]}"
+  availability_zone = "${format("%s%s", element(list(var.aws_region), count.index), element(var.azs, count.index))}"
+  size  = "${var.master["ibm_vol"]}"
+  type  = "gp2"
+}
+
+resource "aws_volume_attachment" "icpmaster_ibm_ebs_att" {
+  count = "${var.master["nodes"]}"
+  device_name = "/dev/xvdb"
+  volume_id   = "${element(aws_ebs_volume.icpmaster_ibm_ebs.*.id,count.index)}"
+  instance_id = "${element(aws_instance.icpmaster.*.id,count.index)}"
+  skip_destroy = false
+  force_detach = true
+}
+
+resource "aws_ebs_volume" "icpmaster_data_ebs" {
+  count = "${var.icp4d_storage_efs == 0 && var.worker["nodes"] == 0 ? var.master["nodes"] : 0 }"
+  availability_zone = "${format("%s%s", element(list(var.aws_region), count.index), element(var.azs, count.index))}"
+  size  = "${var.master["data_vol"]}"
+  type  = "gp2"
+}
+
+resource "aws_volume_attachment" "icpmaster_data_ebs_att" {
+  count = "${var.icp4d_storage_efs == 0 && var.worker["nodes"] ==0 ? var.master["nodes"] : 0 }"
+  device_name = "/dev/xvdc"
+  volume_id   = "${element(aws_ebs_volume.icpmaster_data_ebs.*.id,count.index)}"
+  instance_id = "${element(aws_instance.icpmaster.*.id,count.index)}"
+  skip_destroy = false
+  force_detach = true
+}
+
 resource "aws_instance" "icpmaster" {
   depends_on = [
     "aws_route_table_association.a",
@@ -148,19 +196,6 @@ resource "aws_instance" "icpmaster" {
   ebs_optimized = "${var.master["ebs_optimized"]}"
   root_block_device {
     volume_size = "${var.master["disk"]}"
-  }
-
-  # docker direct-lvm volume
-  ebs_block_device {
-    device_name       = "/dev/xvdx"
-    volume_size       = "${var.master["docker_vol"]}"
-    volume_type       = "gp2"
-  }
-
-  ebs_block_device {
-    device_name       = "/dev/xvdb"
-    volume_size       = "${var.master["ibm_vol"]}"
-    volume_type       = "gp2"
   }
 
   network_interface {

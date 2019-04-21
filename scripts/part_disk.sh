@@ -10,4 +10,4 @@ sudo partprobe
 sudo mkfs.ext4 ${data_disk}1
 echo "${data_disk}1  ${mount_point}   ext4  defaults   0 0" | sudo tee -a /etc/fstab
 
-sudo mount -a
+sudo mount ${mount_point}

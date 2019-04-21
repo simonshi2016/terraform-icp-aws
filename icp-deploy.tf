@@ -39,7 +39,10 @@ ${join("\n", formatlist("%v", aws_instance.icpva.*.private_ip))}
 }
 
 [worker]
-${join("\n", formatlist("%v", aws_instance.icpnodes.*.private_ip))}
+${var.worker["nodes"] > 0 ? 
+  join("\n", formatlist("%v", aws_instance.icpnodes.*.private_ip)) :
+  join("\n", formatlist("%v", aws_network_interface.mastervip.*.private_ip))
+}
 
 EOF
 #  source = "${path.module}/hostlist.txt"

@@ -44,7 +44,7 @@ for i in ${masters[@]};do
         fi
     done
 done
-
+# master4all == 0 : yes
 echo "ssh_key=${ssh_key}" > /tmp/wdp.conf
 echo "virtual_ip_address_1=${cluster_lb}" >> /tmp/wdp.conf
 echo "virtual_ip_address_2=${proxy_lb}" >> /tmp/wdp.conf
@@ -58,11 +58,9 @@ for((i=0;i<${#masters[@]};i++));do
 	echo "${prefix}node_$((i+1))=${masters[i]}" >> /tmp/wdp.conf
 	echo "${prefix}node_path_$((i+1))=/ibm" >> /tmp/wdp.conf
     ssh -o StrictHostKeyChecking=no -i ${ssh_key} "${ssh_user}@${masters[i]}" "sudo /tmp/icp_scripts/part_disk.sh /ibm /dev/xvdb"
-	if [[ $master4all -eq 0 ]];then
+	if [[ $master4all -eq 0 ]] && [[ "$nfs_mount" == "" ]];then
 		echo "node_data_$((i+1))=/data" >> /tmp/wdp.conf
-        if [[ "$nfs_mount" == "" ]];then
-            ssh -o StrictHostKeyChecking=no -i ${ssh_key} "${ssh_user}@${masters[i]}" "sudo /tmp/icp_scripts/part_disk.sh /data /dev/xvdc"
-        fi
+        ssh -o StrictHostKeyChecking=no -i ${ssh_key} "${ssh_user}@${masters[i]}" "sudo /tmp/icp_scripts/part_disk.sh /data /dev/xvdc"
 	fi
 done
 

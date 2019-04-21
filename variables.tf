@@ -88,6 +88,7 @@ variable "master" {
     disk      = "300" //GB
     docker_vol = "100" // GB
     ibm_vol   = "500" //GB
+    data_vol  = "500" //GB
     ebs_optimized = true    // not all instance types support EBS optimized
   }
 }
@@ -124,7 +125,7 @@ variable "worker" {
     disk      = "150" //GB
     docker_vol = "100" // GB
     ibm_vol   = "300" // GB
-    data_vol  = "300" // GB
+    data_vol  = "500" // GB
     ebs_optimized = true    // not all instance types support EBS optimized
   }
 }
