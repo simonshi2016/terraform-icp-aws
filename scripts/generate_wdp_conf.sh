@@ -85,8 +85,18 @@ fi
 echo "ssh_port=22" >> /tmp/wdp.conf
 echo "suppress_warning=true" >> /tmp/wdp.conf
 
+admin_pwd="Passw0rdPassw0rdPassw0rdPassw0rd"
+network_cidr="10.1.0.0/16"
+if [[ -f /opt/ibm/cluster/config.yaml ]];then
+    admin_pwd=$(grep default_admin_password /opt/ibm/cluster/config.yaml | awk -F": " '{print $2}')
+    network_cidr=$(grep network_cidr /opt/ibm/cluster/config.yaml | awk -F": " '{print $2}')
+    if [[ "$network_cidr" == "" ]];then
+        network_cidr="10.1.0.0/16"
+    fi
+fi
+echo "overlay_network=${network_cidr}" >> tmp/wdp.conf
+
 # add cloud additional data
-admin_pwd=$(grep default_admin_password /opt/ibm/cluster/config.yaml | awk -F: '{print $2}')
 echo "cloud=aws" >> /tmp/wdp.conf
 echo "cloud_data=${cluster_domain},${admin_pwd}" >> /tmp/wdp.conf
 
