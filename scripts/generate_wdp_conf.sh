@@ -94,7 +94,7 @@ if [[ -f /opt/ibm/cluster/config.yaml ]];then
         network_cidr="10.1.0.0/16"
     fi
 fi
-echo "overlay_network=${network_cidr}" >> tmp/wdp.conf
+echo "overlay_network=${network_cidr}" >> /tmp/wdp.conf
 
 # add cloud additional data
 echo "cloud=aws" >> /tmp/wdp.conf
