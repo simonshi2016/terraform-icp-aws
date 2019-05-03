@@ -232,7 +232,7 @@ ${count.index == 0 ? "
   : ""
 }
 bootcmd:
-- sed -i 's/SELINUX=enforcing/SELINUX=permissive/g' /etc/sysconfig/selinux
+- sed -i 's/SELINUX=enforcing/SELINUX=permissive/g' /etc/selinux/config
 - setenforce permissive
 runcmd:
 ${count.index > 0 ? "
@@ -364,7 +364,7 @@ write_files:
   encoding: b64
   content: ${base64encode(file("${path.module}/scripts/bootstrap-node.sh"))}
 bootcmd:
-- sed -i 's/SELINUX=enforcing/SELINUX=permissive/g' /etc/sysconfig/selinux
+- sed -i 's/SELINUX=enforcing/SELINUX=permissive/g' /etc/selinux/config
 - setenforce permissive
 runcmd:
 - /tmp/bootstrap-node.sh -c ${aws_s3_bucket.icp_config_backup.id} -s "bootstrap.sh"
@@ -439,7 +439,7 @@ write_files:
   encoding: b64
   content: ${base64encode(file("${path.module}/scripts/bootstrap-node.sh"))}
 bootcmd:
-- sed -i 's/SELINUX=enforcing/SELINUX=permissive/g' /etc/sysconfig/selinux
+- sed -i 's/SELINUX=enforcing/SELINUX=permissive/g' /etc/selinux/config
 - setenforce permissive
 runcmd:
 - /tmp/bootstrap-node.sh -c ${aws_s3_bucket.icp_config_backup.id} -s "bootstrap.sh"
@@ -514,7 +514,7 @@ write_files:
   encoding: b64
   content: ${base64encode(file("${path.module}/scripts/bootstrap-node.sh"))}
 bootcmd:
-- sed -i 's/SELINUX=enforcing/SELINUX=permissive/g' /etc/sysconfig/selinux
+- sed -i 's/SELINUX=enforcing/SELINUX=permissive/g' /etc/selinux/config
 - setenforce permissive
 runcmd:
 - /tmp/bootstrap-node.sh -c ${aws_s3_bucket.icp_config_backup.id} -s "bootstrap.sh"
@@ -585,7 +585,7 @@ write_files:
   encoding: b64
   content: ${base64encode(file("${path.module}/scripts/bootstrap-node.sh"))}
 bootcmd:
-- sed -i 's/SELINUX=enforcing/SELINUX=permissive/g' /etc/sysconfig/selinux
+- sed -i 's/SELINUX=enforcing/SELINUX=permissive/g' /etc/selinux/config
 - setenforce permissive
 runcmd:
 - /tmp/bootstrap-node.sh -c ${aws_s3_bucket.icp_config_backup.id} -s "bootstrap.sh"
