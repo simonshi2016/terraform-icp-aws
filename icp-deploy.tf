@@ -92,6 +92,10 @@ output "ICP Console URL" {
   value = "https://${var.user_provided_cert_dns != "" ? var.user_provided_cert_dns : aws_lb.icp-console.dns_name}:8443"
 }
 
+output "ICP for Data Console URL" {
+  value = "https://${var.user_provided_cert_dns != "" ? var.user_provided_cert_dns : aws_lb.icp-console.dns_name}:31843"
+}
+
 output "ICP Registry ELB URL" {
   value = "https://${aws_lb.icp-console.dns_name}:8500"
 }
