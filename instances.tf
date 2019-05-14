@@ -127,6 +127,10 @@ resource "aws_ebs_volume" "icpmaster_docker_ebs" {
   availability_zone = "${format("%s%s", element(list(var.aws_region), count.index), element(var.azs, count.index))}"
   size  = "${var.master["docker_vol"]}"
   type  = "gp2"
+  tags = "${merge(
+    var.default_tags,
+    map("Name",  "${format("${var.instance_name}-${random_id.clusterid.hex}-master%02d-dockerdisk", count.index + 1) }")
+  )}"
 }
 
 resource "aws_volume_attachment" "icpmaster_docker_ebs_att" {
@@ -143,6 +147,10 @@ resource "aws_ebs_volume" "icpmaster_ibm_ebs" {
   availability_zone = "${format("%s%s", element(list(var.aws_region), count.index), element(var.azs, count.index))}"
   size  = "${var.master["ibm_vol"]}"
   type  = "gp2"
+  tags = "${merge(
+    var.default_tags,
+    map("Name",  "${format("${var.instance_name}-${random_id.clusterid.hex}-master%02d-ibmdisk", count.index + 1) }")
+  )}"
 }
 
 resource "aws_volume_attachment" "icpmaster_ibm_ebs_att" {
@@ -159,6 +167,10 @@ resource "aws_ebs_volume" "icpmaster_data_ebs" {
   availability_zone = "${format("%s%s", element(list(var.aws_region), count.index), element(var.azs, count.index))}"
   size  = "${var.master["data_vol"]}"
   type  = "gp2"
+  tags = "${merge(
+    var.default_tags,
+    map("Name",  "${format("${var.instance_name}-${random_id.clusterid.hex}-master%02d-datadisk", count.index + 1) }")
+  )}"
 }
 
 resource "aws_volume_attachment" "icpmaster_data_ebs_att" {
@@ -617,6 +629,10 @@ resource "aws_ebs_volume" "icpnodes_docker_ebs" {
   availability_zone = "${format("%s%s", element(list(var.aws_region), count.index), element(var.azs, count.index))}"
   size  = "${var.worker["docker_vol"]}"
   type  = "gp2"
+  tags = "${merge(
+    var.default_tags,
+    map("Name",  "${format("${var.instance_name}-${random_id.clusterid.hex}-worker%02d-dockerdisk", count.index + 1) }")
+  )}"
 }
 
 resource "aws_volume_attachment" "icpnodes_docker_ebs_att" {
@@ -633,6 +649,10 @@ resource "aws_ebs_volume" "icpnodes_ibm_ebs" {
   availability_zone = "${format("%s%s", element(list(var.aws_region), count.index), element(var.azs, count.index))}"
   size  = "${var.worker["ibm_vol"]}"
   type  = "gp2"
+  tags = "${merge(
+    var.default_tags,
+    map("Name",  "${format("${var.instance_name}-${random_id.clusterid.hex}-worker%02d-ibmdisk", count.index + 1) }")
+  )}"
 }
 
 resource "aws_volume_attachment" "icpnodes_ibm_ebs_att" {
@@ -649,6 +669,10 @@ resource "aws_ebs_volume" "icpnodes_data_ebs" {
   availability_zone = "${format("%s%s", element(list(var.aws_region), count.index), element(var.azs, count.index))}"
   size  = "${var.worker["data_vol"]}"
   type  = "gp2"
+  tags = "${merge(
+    var.default_tags,
+    map("Name",  "${format("${var.instance_name}-${random_id.clusterid.hex}-worker%02d-datadisk", count.index + 1) }")
+  )}"
 }
 
 resource "aws_volume_attachment" "icpnodes_data_ebs_att" {
