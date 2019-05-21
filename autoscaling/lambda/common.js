@@ -2,30 +2,36 @@ var aws = require('aws-sdk');
 var kubeapi = require('kubernetes-client');
 var fs = require('fs');
 
-aws.config.update({region: region});
-aws.config.setPromisesDependency(Promise);
+function aws_config(awsregion){
+  aws.config.update({region: awsregion});
+  aws.config.setPromisesDependency(Promise);
+}
 
-function get_instance_ip(region, instance_id) {
-  var ec2 = new aws.EC2({apiVersion: '2016-11-15'});
+function get_instance_ip(awsregion, instance_id) {
+  var ec2 = new aws.EC2({apiVersion: '2016-11-15',region: awsregion});
 
   console.log("InstanceID: " + instance_id);
 
+  instanceIDs=[]
+  instanceIDs.push(instance_id)
   var params = {
-    DryRun: false,
-    InstanceIds: [ instance_id ],
+    InstanceIds: instanceIDs
   };
 
-  return ec2.describeInstances(params, function(err, result) {
-    if (err) {
-      console.log(err, err.stack);
-      throw err;
-    } else {
-      console.log("Instance IP address is: " + result.Reservations[0].Instances[0].PrivateIpAddress);
-      return result.Reservations[0].Instances[0].PrivateIpAddress;
-    }
+  return new Promise(function(resolve, reject){
+      ec2.describeInstances(params, function(err, result) {
+        if (err) {
+          console.log(err, err.stack);
+          reject(err)
+        } else {
+          console.log(result);
+          resolve(result.Reservations[0].Instances[0].PrivateIpAddress);
+        }
+      });
   });
 }
 
+#TODO: need to promisfy it
 function get_bucket_object(bucketName, key) {
   var s3 = new aws.S3({apiVersion: '2006-03-01'});
 
@@ -40,7 +46,6 @@ function get_bucket_object(bucketName, key) {
       throw err;
     } else {
       console.log(data);           // successful response
-
       return data.Body;
     }
   });
@@ -82,3 +87,5 @@ function fail_autoscaling(params) {
 module.exports.get_instance_ip = get_instance_ip;
 module.exports.create_job = create_job;
 module.exports.fail_autoscaling = fail_autoscaling;
+module.exports.aws_config = aws_config;
+module.exports.get_bucket_object=get_bucket_object;

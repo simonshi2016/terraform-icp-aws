@@ -44,5 +44,5 @@ module "icpautoscaling" {
     docker_package_location   = "${local.docker_package_uri}"
     image_location            = "${local.image_package_uri}"
     icp_inception_image       = "${var.icp_inception_image}"
-    lambda_s3_bucket          = "${local.lambda_s3_bucket}"
+    lambda_s3_bucket          = "${local.icp_config_s3_bucket}"
 }

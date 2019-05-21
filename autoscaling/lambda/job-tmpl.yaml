@@ -28,7 +28,7 @@ spec:
           crudini --set /installer/cluster/hosts worker ${NODE_IP};
           /installer/installer.sh install -l ${NODE_IP};
           aws --region ${REGION} autoscaling complete-lifecycle-action --lifecycle-hook-name ${LIFECYCLEHOOKNAME} --lifecycle-action-token ${LIFECYCLEACTIONTOKEN} --auto-scaling-group-name ${ASGNAME} --lifecycle-action-result CONTINUE --instance-id ${INSTANCEID}
-        image: ibmcom/icp-inception:2.1.0.1-ee
+        image: ibmcom/icp-inception-amd64:3.1.2-ee
         imagePullPolicy: IfNotPresent
         name: test
         stdin: true

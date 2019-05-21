@@ -95,3 +95,7 @@ variable "lambda_s3_bucket" {
 variable "enabled" {
   default = true
 }
+
+variable "icp_config_s3_bucket" {
+  default=""
+}

@@ -3,7 +3,8 @@ console.log('Loading function');
 var uuid = require('uuid');
 var fs = require('fs');
 var yaml = require('js-yaml');
-var common = require('./common.js')
+var common = require('./common.js') 
+var aws = require('aws-sdk');
 
 var job_tmpl = yaml.safeLoad(fs.readFileSync('./job-tmpl.yaml', 'utf8'));
 
@@ -41,14 +42,15 @@ exports.handler = (event, context, callback) => {
         return;
     }
 
+    common.aws_config(event.region)
+    
     var promises = [];
-
     promises.push(common.get_instance_ip(event.region, instanceId));
     promises.push(common.get_bucket_object(process.env.s3_bucket, "ca.crt"));
     promises.push(common.get_bucket_object(process.env.s3_bucket, "lambda-cert.pem"));
     promises.push(common.get_bucket_object(process.env.s3_bucket, "lambda-key.pem"));
 
-    return Promises.all(promises)
+    return Promise.all(promises)
     .then(function(result) {
       /* try to create a batch job in kube */
       if (event.detail.LifecycleTransition === "autoscaling:EC2_INSTANCE_TERMINATING") {

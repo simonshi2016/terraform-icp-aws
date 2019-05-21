@@ -34,8 +34,13 @@ write_files:
     permissions: '0755'
     encoding: b64
     content: ${base64encode(file("${path.module}/../scripts/bootstrap.sh"))}
+  - path: /tmp/bootstrap-node.sh
+    permissions: '0755'
+    encoding: b64
+    content: ${base64encode(file("${path.module}/../scripts/bootstrap-node.sh"))}
 runcmd:
-  - /tmp/bootstrap.sh ${var.docker_package_location != "" ? "-p ${var.docker_package_location}" : "" } -d /dev/xvdx ${var.image_location != "" ? "-i ${var.image_location}" : "" } -s ${var.icp_inception_image}
+  - /tmp/bootstrap-node.sh -c ${var.icp_config_s3_bucket} -s "bootstrap.sh"
+  - /tmp/icp_scripts/bootstrap.sh ${var.docker_package_location != "" ? "-p ${var.docker_package_location}" : "" } -d /dev/xvdx ${var.image_location != "" ? "-i ${var.image_location}" : "" } -s ${var.icp_inception_image}
 users:
   - default
   - name: icpdeploy
@@ -61,7 +66,7 @@ resource "aws_autoscaling_group" "icp_worker_asg" {
   max_size             = 20
   force_delete         = true
 
-  availability_zones   = "${formatlist("%v%v", var.aws_region, var.azs)}"
+#  availability_zones   = "${formatlist("%v%v", var.aws_region, var.azs)}"
   vpc_zone_identifier  = ["${var.private_subnet_ids}"]
 
   tags = [
